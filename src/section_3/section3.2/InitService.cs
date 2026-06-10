@@ -19,7 +19,15 @@ public class InitService : IHostedService
         
         // TODO Section 3.2 Step 2
         // add cache invalidation logic here.
-        
+        var cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
+        var cachePipe = new List<Task>
+        {
+            cache.RemoveAsync("top:sales", cancellationToken),
+            cache.RemoveAsync("top:name", cancellationToken),
+            cache.RemoveAsync("totalSales", cancellationToken)
+        };
+        cachePipe.AddRange(salesDb.Employees.Select(employee => cache.RemoveAsync($"employee:{employee.EmployeeId}:avg", cancellationToken)));
+        await Task.WhenAll(cachePipe);
         // End Section 3.2 Step 2
 
         var cachePipe = new List<Task>
